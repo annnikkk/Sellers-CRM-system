@@ -1,0 +1,32 @@
+version: '3.9'
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:16
+    hostname: database
+    volumes:
+      - ./postgres:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB=sales
+      - POSTGRES_USER=postgres
+    ports:
+      - "5433:5432"
+
+  webapi:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    hostname: webapi
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/sales
+      - POSTGRES_USER=postgres
+    healthcheck:
+      test: curl http://localhost:8080 || exit 0
+      interval: 10s
+      retries: 5
+      start_period: 15s
+      timeout: 10s
